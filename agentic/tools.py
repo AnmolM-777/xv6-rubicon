@@ -1,41 +1,46 @@
+import re
 from pathlib import Path
+from bridge import XV6Bridge
 
-BASE_DIR = Path("scenarios").resolve()
+SCENARIO_DIR = Path(__file__).parent / "scenarios"
+
+bridge = None
 
 
-def get_safe_path(path):
+def get_safe_path(filename):
+    if not isinstance(filename, str):
+        raise ValueError("Invalid filename")
 
-    file_path = (BASE_DIR / path).resolve()
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", filename):
+        raise ValueError("Invalid filename")
 
-    if not file_path.is_relative_to(BASE_DIR):
-        raise ValueError("Access outside scenarios directory is not allowed")
+    base = SCENARIO_DIR.resolve()
+    path = (base / filename).resolve()
 
-    return file_path
+    if path.parent != base:
+        raise ValueError("Unsafe file path")
+
+    return path
+
+
+def get_bridge():
+    global bridge
+
+    if bridge is None:
+        bridge = XV6Bridge()
+
+    return bridge
 
 
 def list_files():
-
-    files = []
-
-    for item in BASE_DIR.iterdir():
-        if item.is_file():
-            files.append(item.name)
-
-    return files
+    return get_bridge().execute("ls")
 
 
 def read_file(path):
-
-    file_path = get_safe_path(path)
-
-    if not file_path.is_file():
-        raise FileNotFoundError("File not found")
-
-    return file_path.read_text()
+    get_safe_path(path)
+    return get_bridge().execute("cat " + path)
 
 
 def summarize(text):
-
     words = text.split()
-
     return " ".join(words[:20])

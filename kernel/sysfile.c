@@ -198,6 +198,7 @@ isdirempty(struct inode *dp)
   return 1;
 }
 
+
 uint64
 sys_unlink(void)
 {
@@ -208,6 +209,12 @@ sys_unlink(void)
 
   if (argstr(0, path, MAXPATH) < 0)
     return -1;
+
+  // Block deletion by tainted processes.
+  if (myproc()->tainted) {
+    printk("SECURITY: unlink denied for tainted process\n");
+    return -1;
+  }
 
   begin_op();
   if ((dp = nameiparent(path, name)) == 0) {
@@ -254,6 +261,8 @@ bad:
   end_op();
   return -1;
 }
+
+
 
 static struct inode *
 create(char *path, short type, short major, short minor)
@@ -526,5 +535,31 @@ sys_pipe(void)
     fileclose(wf);
     return -1;
   }
+  return 0;
+}
+
+uint64
+sys_taintfile(void)
+{
+  struct inode *ip;
+  char path[MAXPATH];
+
+  if (argstr(0, path, MAXPATH) < 0)
+    return -1;
+
+  begin_op();
+
+  if ((ip = namei(path)) == 0) {
+    end_op();
+    return -1;
+  }
+
+  ilock(ip);
+  ip->tainted = 1;
+  iupdate(ip);
+  iunlockput(ip);
+
+  end_op();
+
   return 0;
 }

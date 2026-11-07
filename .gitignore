@@ -2,3 +2,23 @@ venv/
 __pycache__/
 *.pyc
 .DS_Store
+
+# xv6 build artifacts
+*.o
+*.d
+*.asm
+*.sym
+kernel/kernel
+mkfs/mkfs
+user/_*
+fs.img
+
+# Python generated files
+__pycache__/
+*.pyc
+.pytest_cache/
+venv/
+.venv/
+
+# Temporary files
+*.log

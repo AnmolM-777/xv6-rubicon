@@ -47,3 +47,4 @@ entry("setgroup");
 entry("setbudget");
 entry("getbudget");
 entry("getgroup");
+entry("taintfile");

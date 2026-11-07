@@ -33,6 +33,7 @@ int setgroup(int);
 int setbudget(int, int, int, int);
 int getbudget(int, struct budgetinfo *);
 int getgroup(void);
+int taintfile(char*);
 
 // ulib.c
 int stat(const char *, struct stat *);

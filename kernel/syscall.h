@@ -25,3 +25,4 @@
 #define SYS_setbudget 25
 #define SYS_getbudget 26
 #define SYS_getgroup 27
+#define SYS_taintfile 28
