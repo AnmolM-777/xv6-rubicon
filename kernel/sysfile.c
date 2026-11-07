@@ -198,7 +198,6 @@ isdirempty(struct inode *dp)
   return 1;
 }
 
-
 uint64
 sys_unlink(void)
 {
@@ -261,8 +260,6 @@ bad:
   end_op();
   return -1;
 }
-
-
 
 static struct inode *
 create(char *path, short type, short major, short minor)

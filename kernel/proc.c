@@ -399,6 +399,9 @@ kwait(uint64 addr)
             release(&wait_lock);
             return -1;
           }
+          if (pp->tainted)
+            p->tainted = 1;
+
           pp->parent = 0;
           freeproc(pp);
           release(&pp->lock);
