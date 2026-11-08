@@ -275,7 +275,7 @@ rwsbrk(char *s)
   close(fd);
   unlink("rwsbrk");
 
-  fd = open("README", O_RDONLY);
+  fd = open("README.md", O_RDONLY);
   if (fd < 0) {
     printf("open(README) failed\n");
     exit(1);
@@ -1928,7 +1928,7 @@ dirfile(char *s)
     printf("%s: unlink dirfile/xx succeeded!\n", s);
     exit(1);
   }
-  if (link("README", "dirfile/xx") == 0) {
+  if (link("README.md", "dirfile/xx") == 0) {
     printf("%s: link to dirfile/xx succeeded!\n", s);
     exit(1);
   }
@@ -1968,7 +1968,7 @@ iref(char *s)
     }
 
     mkdir("");
-    link("README", "");
+    link("README.md", "");
     fd = open("", O_CREATE);
     if (fd >= 0)
       close(fd);
@@ -2715,7 +2715,7 @@ lazy_copy(char *s)
     0x3ffffff000, 0x4000000000, 0x8000000000,
   };
   for (int i = 0; i < sizeof(bad) / sizeof(bad[0]); i++) {
-    int fd = open("README", 0);
+    int fd = open("README.md", 0);
     if (fd < 0) {
       printf("cannot open README\n");
       exit(1);
