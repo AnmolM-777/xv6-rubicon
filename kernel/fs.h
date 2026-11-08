@@ -36,6 +36,7 @@ struct dinode {
   short nlink;             // Number of links to inode in file system
   uint size;               // Size of file (bytes)
   short creator_gid;       // Group that created the inode
+  short tainted;           // 1 if file is untrusted
   uint addrs[NDIRECT + 1]; // Data block addresses
 };
 

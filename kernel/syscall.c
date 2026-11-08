@@ -107,6 +107,7 @@ extern uint64 sys_setgroup(void);
 extern uint64 sys_setbudget(void);
 extern uint64 sys_getbudget(void);
 extern uint64 sys_getgroup(void);
+extern uint64 sys_taintfile(void);
 
 // An array mapping syscall numbers from syscall.h
 // to the function that handles the system call.
@@ -138,6 +139,7 @@ static uint64 (*syscalls[])(void) = {
   [SYS_setbudget] = sys_setbudget,
   [SYS_getbudget] = sys_getbudget,
   [SYS_getgroup] = sys_getgroup,
+  [SYS_taintfile] = sys_taintfile,
   // clang-format on
 };
 

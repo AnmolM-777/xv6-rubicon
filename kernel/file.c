@@ -119,8 +119,15 @@ fileread(struct file *f, uint64 addr, int n)
     r = devsw[f->major].read(1, addr, n);
   } else if (f->type == FD_INODE) {
     ilock(f->ip);
-    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0)
+
+    if (f->ip->tainted) {
+      myproc()->tainted = 1;
+    }
+
+    if ((r = readi(f->ip, 1, addr, f->off, n)) > 0) {
       f->off += r;
+    }
+
     iunlock(f->ip);
   } else {
     panic("fileread");
