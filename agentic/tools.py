@@ -26,7 +26,7 @@ def get_safe_path(filename):
 def get_bridge():
     global bridge
 
-    if bridge is None:
+    if bridge is None or bridge.sock is None:
         bridge = XV6Bridge()
 
     return bridge

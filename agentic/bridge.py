@@ -45,8 +45,13 @@ class XV6Bridge:
         if not isinstance(command, str) or not command.strip():
             raise ValueError("Invalid command")
 
-        self.sock.sendall((command + "\n").encode())
-        return self._read_until_prompt()
+        try:
+            self.sock.sendall((command + "\n").encode())
+            return self._read_until_prompt()
+
+        except (OSError, ConnectionError, TimeoutError):
+            self.close()
+            raise
 
     def close(self):
         if self.sock:
