@@ -154,6 +154,9 @@ UPROGS=\
 	$U/_dorphan\
 	$U/_sync\
 	$U/_budgetstat\
+	$U/_gtest\
+	$U/_bt_fail\
+	$U/_bt_block\
 
 fs.img: mkfs/mkfs README.md $(UPROGS)
 	mkfs/mkfs fs.img README.md $(UPROGS)
