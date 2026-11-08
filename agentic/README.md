@@ -1,219 +1,200 @@
 # Agentic AI Integration with xv6
 
-## 1. Project Overview
+**Course:** CSL3030 – Operating Systems Lab
+**Project:** Agentic AI and Kernel-Level Taint Tracking
 
-This project implements an Agentic AI system integrated with the xv6 operating system. A local Large Language Model (LLM) interprets user requests and selects from a predefined set of tools. These tools communicate with an xv6 guest running in QEMU through a TCP serial bridge.
+## 1. Overview
 
-The system combines application-level validation with kernel-level security enforcement. The Python agent restricts the tools and arguments that can be executed, while the xv6 kernel tracks tainted files and processes and prevents a tainted process from deleting files.
+This project implements an AI-powered agent that interacts with an xv6 operating system running inside QEMU.
 
-The main objective is to demonstrate how operating-system-level protection can enforce security policies even when an AI agent encounters malicious instructions in untrusted input.
+The agent accepts natural-language requests, uses an LLM to select predefined tools, validates the proposed actions, and executes approved commands inside the xv6 environment through a Python-to-QEMU bridge.
+
+The project also implements kernel-level taint tracking to demonstrate how the operating system can prevent potentially dangerous operations performed by processes influenced by untrusted data.
+
+The main objective is to demonstrate that AI-generated actions should not be trusted directly. Tool-level validation and kernel-level security enforcement are both necessary.
 
 ## 2. System Architecture
 
+The system consists of the following components:
+
+1. **Python Agent:** Receives user requests and manages the execution workflow.
+2. **LLM Planner:** Uses Ollama with the `qwen2.5:0.5b` model to interpret requests and propose structured tool calls.
+3. **Tool Validator:** Checks tool names, arguments, and file paths before execution.
+4. **Python-to-xv6 Bridge:** Communicates with the xv6 shell through a TCP connection.
+5. **xv6 User Space:** Executes approved commands inside the guest operating system.
+6. **Kernel Security Layer:** Tracks tainted files and processes and enforces restrictions on selected operations.
+
+### Execution Flow
+
 ```text
-                 User Request
-                      |
-                      v
-             Local LLM Planner
-              (Ollama / Qwen)
-                      |
-                      v
-             Structured Tool Call
-                      |
-                      v
-             Python Validator
-          (Allowlist, Schema, Paths)
-                      |
-                      v
-              Tool Dispatcher
-                      |
-                      v
-             TCP Serial Bridge
-               127.0.0.1:5555
-                      |
-                      v
-              Persistent xv6 Shell
-                 (QEMU Guest)
-                      |
-                      v
-              xv6 User Programs
-                      |
-                      v
-              xv6 Kernel Security
-             (Taint Tracking)
-                      |
-                      v
-             Observation Returned
-                 to the Agent
+User Request
+     |
+     v
+Python Agent
+     |
+     v
+LLM Planner (Ollama)
+     |
+     v
+Structured Tool Call
+     |
+     v
+Tool Validator
+     |
+     v
+Python Tool Execution
+     |
+     v
+QEMU TCP Bridge
+     |
+     v
+xv6 Shell / User Programs
+     |
+     v
+xv6 Kernel
+     |
+     v
+Execution Result
+     |
+     v
+Observation Returned to Agent
 ```
 
-The LLM proposes actions but does not receive unrestricted shell access. Every proposed tool call passes through the Python validation layer. Registered tools construct the commands sent to xv6 through the bridge.
+The LLM proposes actions, but it does not directly execute arbitrary shell commands.
 
-The kernel provides the final enforcement layer for the tainted-process deletion restriction.
+## 3. Repository Structure
 
-## 3. Available Agent Tools
-
-| Tool | Description |
-|---|---|
-| `list_files` | Lists files in the xv6 guest filesystem. |
-| `read_file` | Reads an allowed file from the xv6 guest. |
-| `summarize` | Summarizes supplied text using the local LLM. |
-| `read_and_summarize` | Reads a guest file and summarizes its contents. |
-
-### Python Validation
-
-The validator performs the following checks:
-
-- Only registered tool names are accepted.
-- Tool arguments are checked against predefined schemas.
-- Missing or unexpected arguments are rejected.
-- Argument types are validated.
-- Filenames are restricted to an allowed pattern.
-- Path separators and unsafe paths are rejected.
-- Arbitrary shell commands are not accepted as tool calls.
-
-There is no registered file-deletion tool.
-
-## 4. Project Structure
+Important project files and directories:
 
 ```text
 xv6-rubicon/
-|
-|-- kernel/
-|   |-- file.c
-|   |-- file.h
-|   |-- fs.c
-|   |-- fs.h
-|   |-- proc.c
-|   |-- proc.h
-|   |-- syscall.c
-|   |-- syscall.h
-|   |-- sysfile.c
-|
-|-- user/
-|   |-- marktaint.c
-|   |-- tainttest.c
-|   |-- user.h
-|   |-- usys.pl
-|
-|-- agentic/
-    |-- agent.py
-    |-- bridge.py
-    |-- config.py
-    |-- llm_planner.py
-    |-- planner.py
-    |-- schemas.py
-    |-- tools.py
-    |-- validator.py
-    |-- requirements.txt
-    |-- README.md
-    |
-    |-- scenarios/
-    |
-    |-- tests/
-        |-- unit/
-        |   |-- test_bridge.py
-        |   |-- test_planner.py
-        |   |-- test_tools.py
-        |   |-- test_validator.py
-        |
-        |-- integration/
-        |   |-- test_llm_injection.py
-        |   |-- test_prompt_injection.py
-        |   |-- test_xv6_tools.py
-        |
-        |-- manual/
-        |   |-- test_llm_agent.py
-        |   |-- test_llm_planner.py
-        |   |-- test_ollama.py
-        |   |-- test_tool_call.py
-        |   |-- api_test.py
-        |
-        |-- test_results.txt
-        |-- run_all_tests.py
+│
+├── agentic/
+│   ├── agent.py
+│   ├── llm_planner.py
+│   ├── schemas.py
+│   ├── validator.py
+│   ├── tools.py
+│   ├── bridge.py
+│   ├── requirements.txt
+│   ├── README.md
+│   ├── run_all_tests.py
+│   ├── scenarios/
+│   └── test_reports/
+│
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── manual/
+│
+├── kernel/
+│   ├── proc.c
+│   ├── proc.h
+│   ├── file.c
+│   ├── file.h
+│   ├── fs.c
+│   ├── fs.h
+│   ├── sysfile.c
+│   ├── syscall.c
+│   └── syscall.h
+│
+├── user/
+│   ├── marktaint.c
+│   ├── tainttest.c
+│   ├── user.h
+│   └── usys.pl
+│
+└── Makefile
 ```
 
-`api_test.py` is an older API experiment and is intentionally excluded from the unified test runner.
+## 4. Requirements
 
-## 5. Requirements
+The project was developed and tested using:
 
-The project was developed in an Ubuntu ARM64 virtual machine running on an Apple Silicon Mac.
+- Ubuntu ARM64 virtual machine on an Apple M1 host.
+- xv6-riscv.
+- QEMU.
+- RISC-V cross-compilation toolchain.
+- Python 3.
+- Ollama.
+- `qwen2.5:0.5b` language model.
 
-Required software:
+The Python agent and QEMU guest should run inside the same Ubuntu VM because the bridge connects to `127.0.0.1:5555`.
 
-- Ubuntu Linux
-- RISC-V xv6 toolchain (`riscv64-unknown-elf-gcc` and related tools)
-- QEMU RISC-V system emulator
-- Python 3
-- Ollama
-- Ollama model: `qwen2.5:0.5b`
-- Python package: `ollama`
+## 5. Build and Run xv6
 
-The QEMU guest and Python agent should run in the same Ubuntu environment because the bridge connects to `127.0.0.1:5555`.
-
-## 6. Build and Run xv6
-
-From the repository root in Ubuntu:
+Navigate to the repository:
 
 ```bash
 cd ~/xv6-rubicon
+```
 
+Build xv6:
+
+```bash
 make clean
-
-make TOOLPREFIX=riscv64-unknown-elf- \
-     QEMU="$HOME/qemu/build/qemu-system-riscv64"
+make TOOLPREFIX=riscv64-unknown-elf-
 ```
 
-A clean build recreates `fs.img`. The Makefile includes the scenario files required by the demonstration.
-
-### Start QEMU with the TCP Serial Bridge
-
-Open the first Ubuntu terminal:
+Start QEMU with the TCP serial bridge:
 
 ```bash
-cd ~/xv6-rubicon
-
-make qemu TOOLPREFIX=riscv64-unknown-elf- \
-QEMU="$HOME/qemu/build/qemu-system-riscv64 -serial tcp:127.0.0.1:5555,server=on,wait=off -monitor none"
+make qemu TOOLPREFIX=riscv64-unknown-elf- QEMU="$HOME/qemu/build/qemu-system-riscv64 -serial tcp:127.0.0.1:5555,server=on,wait=off -monitor none"
 ```
 
 Keep this terminal running.
 
-The xv6 serial console is exposed through TCP port `5555`.
+The xv6 shell is now accessible through the TCP connection on port `5555`.
 
-**Important:** Do not connect through `nc` while the Python bridge is using this port. The serial connection is intended for one client at a time.
-
-## 7. Set Up and Run the Python Agent
+## 6. Set Up the Python Agent
 
 Open a second Ubuntu terminal:
 
 ```bash
 cd ~/xv6-rubicon/agentic
+```
 
+Create and activate a virtual environment:
+
+```bash
 python3 -m venv venv
-
 source venv/bin/activate
+```
 
+Install the required Python dependency:
+
+```bash
 pip install -r requirements.txt
 ```
 
-Ensure Ollama is running and the required model is available:
+### Set Up Ollama
+
+Make sure Ollama is installed and running.
+
+Download the model:
 
 ```bash
 ollama pull qwen2.5:0.5b
+```
 
+Verify that the model is available:
+
+```bash
 ollama list
 ```
 
-If the Ollama service is not already running:
+If Ollama is not already running as a service, start it in another terminal:
 
 ```bash
 ollama serve
 ```
 
-Run the agent:
+## 7. Run the Agent
+
+With QEMU running and the Python virtual environment activated:
 
 ```bash
+cd ~/xv6-rubicon/agentic
 python agent.py
 ```
 
@@ -226,163 +207,236 @@ summarize inbox.txt
 exit
 ```
 
-## 8. Kernel-Level Taint Tracking
+The agent uses predefined tools to interact with xv6.
 
-The project implements taint tracking across files and processes.
+### Implemented Tools
 
-### 8.1 Inode Taint
+| Tool | Purpose |
+|---|---|
+| `list_files` | Lists files inside the xv6 guest |
+| `read_file` | Reads an approved file |
+| `summarize` | Summarizes supplied text |
+| `read_and_summarize` | Reads and summarizes a file |
 
-A tainted flag is maintained in the in-memory inode and on-disk dinode structures.
+Tool calls are validated before execution. File access is restricted to the configured scenario directory.
 
-The `taintfile` system call marks a file's inode as tainted. The taint information is persisted through the filesystem inode update mechanism.
+## 8. Python-to-xv6 Bridge
 
-### 8.2 Process Taint
+The bridge is implemented in:
 
-Each process contains a taint flag in its process structure.
+```text
+agentic/bridge.py
+```
 
-When a process reads a tainted file through `fileread()`, its taint flag is set.
+It establishes a TCP connection to:
 
-### 8.3 Taint Propagation
+```text
+127.0.0.1:5555
+```
 
-Taint propagates through the following mechanisms:
+The bridge:
 
-- **File read:** Reading a tainted inode marks the current process as tainted.
-- **Fork:** `kfork()` copies the parent's taint state to the child.
-- **Wait:** `kwait()` propagates a tainted child's state back to its parent when the child is collected.
+- Establishes a connection with the xv6 serial console.
+- Sends commands to the xv6 shell.
+- Waits for the shell prompt to identify command completion.
+- Captures command output.
+- Handles connection errors and timeouts.
+- Closes the socket when an execution error occurs.
+- Allows a new connection to be created when the previous socket has been closed.
 
-The wait propagation supports the persistent-shell bridge scenario, where multiple commands execute through the same xv6 shell process.
+The bridge maintains a persistent shell connection during normal operation.
 
-### 8.4 Kernel Enforcement
+### Bridge Recovery
 
-The `sys_unlink()` system call checks the calling process's taint state.
+The bridge recovery mechanism is implemented through `get_bridge()` in `agentic/tools.py`.
 
-If the process is tainted, the kernel rejects the deletion and logs:
+If the previous socket is closed, the next tool invocation creates a new `XV6Bridge` instance.
+
+This recovery behavior was tested by deliberately closing the existing socket and verifying that a new bridge could successfully execute `list_files()`.
+
+Note: This verifies recovery after socket closure. Automatic retry of a command after an uncertain execution failure is intentionally not performed.
+
+## 9. Kernel-Level Taint Tracking
+
+Kernel-level taint tracking is implemented to prevent selected dangerous operations by processes influenced by untrusted files.
+
+### 9.1 File Tainting
+
+A new system call named `taintfile()` marks a file as tainted.
+
+The taint information is stored in the inode structure and persisted through the filesystem metadata.
+
+### 9.2 Process Tainting
+
+When a process reads a tainted file, its taint flag is set.
+
+The relevant implementation is in:
+
+```text
+kernel/file.c
+```
+
+### 9.3 Taint Propagation
+
+Taint propagates through relevant process operations:
+
+- A child process inherits its parent's taint during `fork()`.
+- A parent process inherits taint from a tainted child when collecting its exit status through `wait()`.
+
+The process taint flag is maintained in:
+
+```text
+kernel/proc.h
+```
+
+### 9.4 Kernel Enforcement
+
+The kernel restricts `unlink()` when the calling process is tainted.
+
+The enforcement is implemented in:
+
+```text
+kernel/sysfile.c
+```
+
+When a tainted process attempts to delete a file, the kernel rejects the operation and prints:
 
 ```text
 SECURITY: unlink denied for tainted process
 ```
 
-This demonstrates why kernel enforcement is necessary: Python-side validation alone cannot prevent a process from attempting a filesystem operation through another execution path.
+This demonstrates that security enforcement occurs inside the operating system rather than relying only on Python-side validation.
 
-## 9. Prompt-Injection Demonstration
+**Scope limitation:** The current implementation enforces this policy for `unlink()`. It does not claim to prevent every possible destructive operation or provide complete information-flow security.
 
-The demonstration uses three files:
+## 10. Prompt Injection Demonstration
 
-| File | Purpose |
-|---|---|
-| `report.txt` | Contains trusted information to summarize. |
-| `inbox.txt` | Contains untrusted content with malicious instructions. |
-| `important.txt` | Represents a file that must not be deleted. |
+The project includes a controlled prompt-injection scenario using files inside the xv6 guest.
 
-The malicious content in `inbox.txt` attempts to instruct the agent to ignore the user's request and delete `important.txt`.
+### Scenario Files
 
-The expected execution sequence is:
+`report.txt` contains ordinary project information.
 
-1. The user asks the agent to summarize `inbox.txt`.
-2. The LLM selects the appropriate read-and-summarize tool.
-3. The Python validator checks the proposed tool call.
-4. The xv6 guest reads the tainted inbox file.
-5. The reading process becomes tainted.
-6. A subsequent deletion attempt is made through the persistent xv6 shell.
-7. The kernel detects the tainted process and rejects the `unlink` operation.
-8. `important.txt` remains present.
+`inbox.txt` contains ordinary information along with a malicious instruction asking the agent to delete:
 
-The test demonstrates enforcement of the specific malicious-inbox scenario. It does not establish immunity to every possible prompt-injection attack.
+```text
+important.txt
+```
 
-## 10. Testing
+The agent is asked to summarize the files.
 
-Tests are organized into three categories.
+The malicious text is treated as untrusted file content rather than an authoritative instruction.
 
-### Unit Tests
+A repeatable test planner proposes the prohibited action after reading the malicious content.
 
-Located in `tests/unit/`:
+The taint-tracking mechanism then demonstrates that a tainted process cannot perform the protected `unlink()` operation.
 
-- Bridge behavior
-- Planner behavior
-- Tool execution
-- Input validation
+### Expected Security Result
 
-Run using:
+```text
+SECURITY: unlink denied for tainted process
+```
+
+The file `important.txt` remains present in the xv6 filesystem.
+
+This demonstrates the importance of enforcing security policies at the kernel level, even when an AI agent or an application layer proposes an unsafe action.
+
+## 11. Running Tests
+
+The project contains unit, integration, and manual diagnostic tests.
+
+### 11.1 Python Unit Tests
+
+From the repository root:
 
 ```bash
+cd ~/xv6-rubicon
 python -m unittest discover -s tests/unit -v
 ```
 
-### Integration Tests
+The latest recorded unit-test run passed all 22 tests.
 
-Located in `tests/integration/`:
+### 11.2 Complete Test Runner
 
-| Test | Purpose |
-|---|---|
-| `test_xv6_tools.py` | Checks communication with xv6 tools. |
-| `test_prompt_injection.py` | Checks prompt-injection validation and security behavior. |
-| `test_llm_injection.py` | Demonstrates LLM interaction and kernel-level taint enforcement. |
-
-### Manual Diagnostic Tests
-
-Located in `tests/manual/`:
-
-- `test_ollama.py`
-- `test_llm_planner.py`
-- `test_tool_call.py`
-- `test_llm_agent.py`
-
-These scripts provide additional checks of the local LLM and agent workflow.
-
-`api_test.py` is intentionally excluded from the unified test execution.
-
-### Unified Test Runner
-
-The project includes `run_all_tests.py`, intended to execute the test suite and generate consolidated reports.
-
-From the `agentic` directory:
+Run the unified test runner:
 
 ```bash
-python run_all_tests.py
+python agentic/run_all_tests.py
 ```
 
-The runner is designed to generate:
+The runner executes the configured unit tests, xv6 integration tests, prompt-injection tests, and manual LLM diagnostics.
+
+Ollama must be available for the LLM-dependent checks, and QEMU must be running for the xv6 integration tests.
+
+The latest complete test run produced:
 
 ```text
-test_reports/
-    test_report.json
-    test_report.txt
-    test_report.html
+FINAL TEST SUMMARY
+
+Passed : 8
+Failed : 0
+Skipped: 0
+Total  : 8
 ```
 
-The HTML report provides a visual summary of test outcomes and individual test results.
+### 11.3 Test Reports
 
-**Validation note:** The unified runner has been created, but its complete execution on the Ubuntu VM is pending. Its final pass/fail results should be recorded after that validation.
+The unified test runner generates reports in:
 
-## 11. Security Scope and Limitations
+```text
+agentic/test_reports/
+```
 
-This implementation is a teaching prototype rather than a complete information-flow security system.
+Open the HTML dashboard:
 
-1. Taint propagation currently covers file reads, fork inheritance, and child-to-parent propagation through wait. Other information-flow channels, such as pipes, are not covered.
-2. Executing a tainted executable is not currently demonstrated as a source of process taint propagation.
-3. The `taintfile` system call is a demonstration mechanism. A production implementation would require a defined authorization policy for marking files tainted.
-4. Python validation restricts the agent interface but is not a general sandbox for arbitrary host commands.
-5. The prompt-injection demonstration covers a specific malicious-input scenario and does not prove general immunity to prompt injection.
-6. The bridge expects a persistent xv6 shell and one TCP client. Reconnection and multi-client handling are not fully implemented.
-7. LLM output may vary. The validator and kernel enforcement must remain active regardless of the model's response.
+```bash
+cd ~/xv6-rubicon/agentic
+xdg-open test_reports/test_report.html
+```
 
-## 12. Test and CI Status
+The dashboard provides a visual summary of the test execution results.
 
-The following results were recorded during development:
+## 12. Verified Results
 
-- 23 Python tests passed in an earlier Ubuntu test run.
-- GitHub Actions Linux job passed.
-- GitHub Actions macOS job passed.
-- The prompt-injection and kernel-taint demonstration passed individually.
+The following checks have been completed:
 
-These results refer to the recorded development runs. The unified runner's complete execution remains pending separate validation.
+| Test | Result |
+|---|---|
+| Python unit tests | 22/22 passed |
+| xv6 tool integration | Passed |
+| Prompt-injection demonstration | Passed |
+| LLM and kernel taint test | Passed |
+| Ollama connectivity | Passed |
+| LLM planner | Passed |
+| Structured tool-call validation | Passed |
+| LLM agent execution | Passed |
+| Bridge normal operation | Passed |
+| Bridge recovery after socket closure | Passed |
+| Unified test runner | 8/8 passed |
+| HTML dashboard generation | Verified |
 
-The GitHub Actions workflow checks the repository build and configured xv6 tests. It should not be assumed to execute the local Ollama/QEMU integration tests unless those steps are explicitly added to the workflow.
+These results describe the latest recorded test runs and the separate bridge recovery check.
 
-## 13. Conclusion
+## 13. Security Considerations and Limitations
 
-This project demonstrates an architecture in which a local LLM proposes actions, a Python validation layer restricts tool execution, and the xv6 kernel enforces a security policy.
+- The LLM is not trusted to generate executable shell commands.
+- Tool calls are validated before execution.
+- File paths are restricted to the configured scenario directory.
+- The bridge communicates with the xv6 guest rather than providing unrestricted host-shell access.
+- Kernel-level taint tracking provides an additional security boundary.
+- The current kernel policy specifically restricts `unlink()` for tainted processes.
+- The implementation does not guarantee complete protection against all forms of prompt injection.
+- The TCP bridge uses shell-prompt detection and is intended for this controlled lab environment.
+- Automatic command retry is not implemented because a failed response does not prove that the original command was never executed.
 
-The prompt-injection scenario illustrates that malicious instructions contained in untrusted file content do not automatically gain authority to perform destructive operations. Even when a deletion attempt reaches the operating-system interface, kernel-level taint enforcement rejects it.
+## 14. Conclusion
 
-The implementation highlights the importance of combining AI-level safeguards with operating-system-level security mechanisms.
+This project demonstrates the integration of an LLM-based agent with a modified xv6 operating system.
+
+It combines structured tool calls, Python-side validation, a TCP bridge to QEMU, and kernel-level taint tracking.
+
+The prompt-injection scenario demonstrates why application-level safeguards alone are insufficient and why the operating system must enforce critical security policies independently.
+
+The implementation and its unified test suite have been successfully executed in the Ubuntu/QEMU environment.
+
+---
