@@ -1,61 +1,35 @@
-
 """
 AGENTIC AI - COMPLETE DEMONSTRATION TEST RUNNER
 
-=========================================================
-INSTRUCTIONS FOR THE  DEMONSTRATION
-=========================================================
+BEFORE RUNNING:
 
-BEFORE RUNNING THIS SCRIPT:
-
-1. Open Ubuntu/ VM.
-2. Open Terminal 1 and start xv6:
-
-   cd ~/xv6-rubicon
-
-   make qemu TOOLPREFIX=riscv64-unknown-elf- \
-   QEMU="$HOME/qemu/build/qemu-system-riscv64 -serial tcp:127.0.0.1:5555,server=on,wait=off -monitor none"
-
-3. Wait until the xv6 shell prompt appears.
-   Keep this terminal open.
-
-4. Make sure Ollama is running in Ubuntu.
-   If it is not running, open another terminal and execute:
-
-   ollama serve
-
-   The model used by this project should already be installed:
-   qwen2.5:0.5b
-
-5. Open another terminal and run:
+1. Start xv6/QEMU in Terminal 1.
+2. Make sure Ollama is running.
+3. Open another terminal:
 
    cd ~/xv6-rubicon/agentic
    source venv/bin/activate
    python run_all_tests.py
 
-THAT IS IT.
-
-The script will automatically:
-- Run Python unit tests.
-- Run xv6 integration tests.
-- Run prompt-injection and kernel-taint demonstration.
-- Run Ollama diagnostic scripts.
-- Save logs and generate an HTML dashboard.
+The script automatically:
+- Runs Python unit tests.
+- Runs xv6 integration tests.
+- Runs prompt-injection and kernel-taint tests.
+- Runs Ollama and LLM diagnostic tests.
+- Generates HTML, JSON and TXT reports.
 
 NOTE:
-- Do not connect to port 5555 using nc while this script is running.
-- Run this script inside Ubuntu, not on the Mac host.
+- Do not connect to port 5555 using nc.
+- Run inside Ubuntu, not Mac.
 - api_test.py is intentionally excluded.
-- Integration tests use the disposable xv6 guest.
-=========================================================
 """
 
+import os
 import sys
 import json
 import html
 import subprocess
 import urllib.request
-import urllib.error
 
 from pathlib import Path
 from datetime import datetime
@@ -70,7 +44,7 @@ results = []
 
 
 # ---------------------------------------------------------
-# Utility: run one test and record its output
+# Run one test and record its output
 # ---------------------------------------------------------
 
 def run_test(name, command, timeout=300):
@@ -81,13 +55,20 @@ def run_test(name, command, timeout=300):
 
     start = datetime.now()
 
+    # Make parent directory available for Python imports.
+    env = os.environ.copy()
+    env["PYTHONPATH"] = (
+        str(BASE_DIR) + os.pathsep + env.get("PYTHONPATH", "")
+    )
+
     try:
         process = subprocess.run(
             command,
             cwd=BASE_DIR,
             capture_output=True,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
 
         output = process.stdout + process.stderr
@@ -131,7 +112,7 @@ def run_test(name, command, timeout=300):
 
 
 # ---------------------------------------------------------
-# Check Ollama before starting the test sequence
+# Check Ollama connection
 # ---------------------------------------------------------
 
 def check_ollama():
@@ -144,6 +125,7 @@ def check_ollama():
         )
 
         with urllib.request.urlopen(request, timeout=5) as response:
+
             if response.status == 200:
                 print("Ollama is reachable.")
                 return True
@@ -152,7 +134,7 @@ def check_ollama():
         pass
 
     print("Ollama is not reachable.")
-    print("Start it in another terminal using: ollama serve")
+    print("Start it using: ollama serve")
 
     return False
 
@@ -169,7 +151,6 @@ def main():
 
     print("Started:", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-    # Ollama is required for the LLM-based tests.
     if not check_ollama():
 
         print("\nCannot continue without Ollama.")
@@ -281,12 +262,11 @@ def main():
                 "output": "File not found: " + file_path
             })
 
-    # Generate reports after all tests finish.
     generate_reports()
 
 
 # ---------------------------------------------------------
-# Generate text, JSON and HTML reports
+# Generate TXT, JSON and HTML reports
 # ---------------------------------------------------------
 
 def generate_reports():
@@ -448,7 +428,7 @@ def generate_reports():
     with open(REPORT_DIR / "test_report.html", "w") as f:
         f.write(dashboard)
 
-    # Final terminal summary
+    # Final summary
     print("\n" + "=" * 65)
     print("             FINAL TEST SUMMARY")
     print("=" * 65)
