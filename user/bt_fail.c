@@ -11,7 +11,6 @@ check(int cond, const char *msg)
     exit(1);
   }
 }
-
 static void
 create_file(const char *name)
 {
@@ -88,4 +87,3 @@ main(void)
   printf("bt_fail: all tests passed\n");
   exit(0);
 }
-

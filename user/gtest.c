@@ -10,7 +10,6 @@ check(int cond, const char *msg)
     exit(1);
   }
 }
-
 int
 main(int argc, char *argv[])
 {
@@ -80,4 +79,3 @@ main(int argc, char *argv[])
   printf("gtest: all tests passed\n");
   exit(0);
 }
-
