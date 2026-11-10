@@ -125,6 +125,7 @@ allocproc(void)
 found:
   p->pid = allocpid();
   p->gid = 0;
+  p->tainted = 0;
   p->state = USED;
 
   // Allocate a trapframe page.
@@ -169,6 +170,7 @@ freeproc(struct proc *p)
   p->chan = 0;
   p->killed = 0;
   p->xstate = 0;
+  p->tainted = 0;
   p->state = UNUSED;
 }
 
@@ -277,7 +279,7 @@ kfork(void)
   }
   np->sz = p->sz;
   np->gid = p->gid;
-
+  np->tainted = p->tainted;
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
 
@@ -397,6 +399,9 @@ kwait(uint64 addr)
             release(&wait_lock);
             return -1;
           }
+          if (pp->tainted)
+            p->tainted = 1;
+
           pp->parent = 0;
           freeproc(pp);
           release(&pp->lock);
