@@ -154,9 +154,12 @@ UPROGS=\
 	$U/_dorphan\
 	$U/_sync\
 	$U/_budgetstat\
-        $U/_budgettest\
-        $U/_marktaint\
-        $U/_tainttest\
+	$U/_gtest\
+	$U/_bt_fail\
+	$U/_bt_block\
+	$U/_budgettest\
+	$U/_marktaint\
+	$U/_tainttest\
 
 fs.img: mkfs/mkfs README.md $(UPROGS) report.txt inbox.txt important.txt
 	mkfs/mkfs fs.img README.md $(UPROGS) report.txt inbox.txt important.txt
