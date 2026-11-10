@@ -11,3 +11,22 @@ The project-1 kernel interface is:
 The budget decision is made in `syscall()` before the syscall handler runs.
 The xv6 toolchain and QEMU are required to build and boot the tree; use
 `make qemu` from the repository root.
+
+## Validation
+
+The kernel and user programs can be built with:
+
+```sh
+make
+```
+
+The project-specific user tests are `gtest`, `bt_fail`, and `bt_block`.
+The Python agent tests are run from the `agentic` directory:
+
+```sh
+cd agentic
+PYTHONPATH=. python3 -m unittest discover -s tests/unit -v
+```
+
+See [PROJECT_REPORT.md](PROJECT_REPORT.md) for the implementation summary,
+design diagram, challenges, and validation status.
