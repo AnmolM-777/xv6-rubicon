@@ -99,7 +99,8 @@ main(void)
   // Step 10: Verify budget counters
   check(getbudget(TEST_GID, &bi) == 0, "getbudget failed");
   check(bi.n_allowed == 6, "n_allowed must be 6");
-  check(bi.n_blocked == 1, "n_blocked must be 1 (counted once per blocked call)");
+  check(bi.n_blocked == 1,
+        "n_blocked must be 1 (counted once per blocked call)");
   check(bi.n_refused == 0, "n_refused must be 0");
   check(bi.budget == 40, "remaining budget must be 40 (50 refill - 10 cost)");
 
