@@ -10,6 +10,7 @@ check(int cond, const char *msg)
     exit(1);
   }
 }
+
 int
 main(int argc, char *argv[])
 {
@@ -47,6 +48,7 @@ main(int argc, char *argv[])
     }
     exit(0);
   }
+
   int status = 0;
   wait(&status);
   check(status == 0, "child process fork inheritance check failed");
@@ -56,11 +58,12 @@ main(int argc, char *argv[])
   pid = fork();
   check(pid >= 0, "fork for exec failed");
   if (pid == 0) {
-    char *args[] = { "gtest", "exec_child", 0 };
+    char *args[] = {"gtest", "exec_child", 0};
     exec("gtest", args);
     printf("gtest FAIL: exec failed\n");
     exit(1);
   }
+
   wait(&status);
   check(status == 0, "exec preservation check failed");
   printf("gtest: exec preservation (PASS)\n");

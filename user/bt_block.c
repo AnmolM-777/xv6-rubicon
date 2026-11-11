@@ -11,6 +11,7 @@ check(int cond, const char *msg)
     exit(1);
   }
 }
+
 static void
 create_file(const char *name)
 {
@@ -19,6 +20,7 @@ create_file(const char *name)
     printf("bt_block: cannot create %s\n", name);
     exit(1);
   }
+
   write(fd, "test", 4);
   close(fd);
 }
@@ -27,9 +29,8 @@ int
 main(void)
 {
   const int TEST_GID = 6;
-  const char *files[6] = {
-    "btb_f0", "btb_f1", "btb_f2", "btb_f3", "btb_f4", "btb_f5"
-  };
+  const char *files[6] = {"btb_f0", "btb_f1", "btb_f2",
+                          "btb_f3", "btb_f4", "btb_f5"};
   int results[6];
   struct budgetinfo bi;
 
@@ -57,7 +58,8 @@ main(void)
 
   int mid_tick = uptime();
 
-  // Step 5: Perform 6th unlink - should BLOCK until 100-tick period refills 50 budget, then complete
+  // Step 5: Perform 6th unlink - should BLOCK until 100-tick period refills
+  // 50 budget, then complete
   results[5] = unlink(files[5]);
 
   int end_tick = uptime();
@@ -68,33 +70,42 @@ main(void)
   // Step 7: Verify all operations succeeded
   for (int i = 0; i < 6; i++) {
     if (results[i] != 0) {
-      printf("bt_block FAIL: op %d returned %d, expected 0\n", i + 1, results[i]);
+      printf("bt_block FAIL: op %d returned %d, expected 0\n", i + 1,
+             results[i]);
       exit(1);
     }
   }
+
   printf("bt_block: all 6 operations succeeded (PASS)\n");
 
   // Step 8: Verify actual blocking duration
   int elapsed_blocked = end_tick - mid_tick;
-  printf("bt_block: start=%d, after_5th=%d, after_6th=%d (blocked_wait=%d ticks)\n",
+  printf("bt_block: start=%d, after_5th=%d, after_6th=%d (blocked_wait=%d "
+         "ticks)\n",
          start_tick, mid_tick, end_tick, elapsed_blocked);
 
-  // BUDGET_PERIOD is 100 ticks. The 6th op must have waited for the period boundary.
-  check(elapsed_blocked >= 80, "6th operation did not block for expected refill duration");
+  // BUDGET_PERIOD is 100 ticks. The 6th op must have waited for the period
+  // boundary.
+  check(elapsed_blocked >= 80,
+        "6th operation did not block for expected refill duration");
   printf("bt_block: actual blocking and timer wake-up verified (PASS)\n");
 
   // Step 9: Verify 6th file was actually unlinked
   int fd = open(files[5], O_RDONLY);
   check(fd < 0, "6th file should have been deleted after unblocking");
-  printf("bt_block: filesystem operation executed successfully after refill (PASS)\n");
+  printf("bt_block: filesystem operation executed successfully after refill "
+         "(PASS)\n");
 
   // Step 10: Verify budget counters
   check(getbudget(TEST_GID, &bi) == 0, "getbudget failed");
   check(bi.n_allowed == 6, "n_allowed must be 6");
-  check(bi.n_blocked == 1, "n_blocked must be 1 (counted once per blocked call)");
+  check(bi.n_blocked == 1,
+        "n_blocked must be 1 (counted once per blocked call)");
   check(bi.n_refused == 0, "n_refused must be 0");
   check(bi.budget == 40, "remaining budget must be 40 (50 refill - 10 cost)");
-  printf("bt_block: counters verified (allowed=6, blocked=1, refused=0, budget=40) (PASS)\n");
+
+  printf("bt_block: counters verified (allowed=6, blocked=1, refused=0, "
+         "budget=40) (PASS)\n");
 
   printf("bt_block: all tests passed\n");
   exit(0);
