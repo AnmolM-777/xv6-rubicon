@@ -45,8 +45,7 @@ main(void)
   }
 
   // Step 2: Configure group 5 with budget=50, refill=0, mode=FAIL
-  check(setbudget(TEST_GID, 50, 0, BUDGET_FAIL) == 0,
-        "setbudget failed");
+  check(setbudget(TEST_GID, 50, 0, BUDGET_FAIL) == 0, "setbudget failed");
 
   // Step 3: Enter group 5
   check(setgroup(TEST_GID) == 0, "setgroup(TEST_GID) failed");
@@ -63,19 +62,19 @@ main(void)
   // Step 6: Verify return values
   for (int i = 0; i < 5; i++) {
     if (results[i] != 0) {
-      printf("bt_fail FAIL: op %d returned %d, expected 0\n",
-             i + 1, results[i]);
+      printf("bt_fail FAIL: op %d returned %d, expected 0\n", i + 1,
+             results[i]);
       exit(1);
     }
   }
 
   if (results[5] != -1) {
-    printf("bt_fail FAIL: 6th op returned %d, expected -1\n",
-           results[5]);
+    printf("bt_fail FAIL: 6th op returned %d, expected -1\n", results[5]);
     exit(1);
   }
 
-  printf("bt_fail: first 5 operations succeeded, 6th operation rejected (PASS)\n");
+  printf(
+      "bt_fail: first 5 operations succeeded, 6th operation rejected (PASS)\n");
 
   // Step 7: Verify filesystem persistence
   int fd = open(files[5], O_RDONLY);
@@ -91,7 +90,8 @@ main(void)
   check(bi.n_refused == 1, "n_refused must be 1");
   check(bi.n_blocked == 0, "n_blocked must be 0");
 
-  printf("bt_fail: counters verified (allowed=5, refused=1, blocked=0) (PASS)\n");
+  printf(
+      "bt_fail: counters verified (allowed=5, refused=1, blocked=0) (PASS)\n");
 
   printf("bt_fail: all tests passed\n");
   exit(0);
