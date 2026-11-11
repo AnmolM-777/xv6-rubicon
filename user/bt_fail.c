@@ -1,4 +1,3 @@
-
 #include "kernel/types.h"
 #include "kernel/param.h"
 #include "kernel/fcntl.h"
@@ -74,7 +73,7 @@ main(void)
   }
 
   printf(
-      "bt_fail: first 5 operations succeeded, 6th operation rejected (PASS)\n");
+    "bt_fail: first 5 operations succeeded, 6th operation rejected (PASS)\n");
 
   // Step 7: Verify filesystem persistence
   int fd = open(files[5], O_RDONLY);
@@ -91,7 +90,7 @@ main(void)
   check(bi.n_blocked == 0, "n_blocked must be 0");
 
   printf(
-      "bt_fail: counters verified (allowed=5, refused=1, blocked=0) (PASS)\n");
+    "bt_fail: counters verified (allowed=5, refused=1, blocked=0) (PASS)\n");
 
   printf("bt_fail: all tests passed\n");
   exit(0);
